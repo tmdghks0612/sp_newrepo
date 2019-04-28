@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#define MAX 25
+
+char* instruction[] = {"help", "dir", "quit", "history", "dump", "edit", "address", "value", "fill", "reset", "opcode mnemonic", "opcodelist", "h", "d", "q", "hi", "du", "e", "f"};
+
+void PrintInstruction();
+void PrintDir();
+int main()
+{
+	char* input;
+	input = (char*) malloc(sizeof(char)*MAX);
+	do
+	{
+		printf("sicsim> ");
+		scanf("%s", input);
+		if(!strcmp(input,instruction[0])||!strcmp(input,instruction[12]))
+		{
+			PrintInstruction();
+			continue;
+		}
+		else if(!strcmp(input,instruction[1])||!strcmp(input,instruction[13]))
+		{
+			PrintDir();
+			continue;
+		}
+
+	}while((strcmp(input, "quit")&&strcmp(input, "q")));
+	return 1;
+}
+
+//When making dump use sscanf
+
+void PrintInstruction()
+{
+	printf("h[elp]\nd[ir]\nq[uit]\nhi[story]\ndu[mp] [start, end]\ne[dit] address, value\nf[ill] start, end, value\nreset\nopcode mnemonic\nopcodelist\n");
+	return;
+}
+
+void PrintDir()
+{
+	DIR* dname=opendir(".");
+	struct dirent* dir;
+	struct stat filestat;
+	stat(file,&filestat);
+	while((dir=readdir(dname)) != NULL)
+	{
+		printf("%s/\t",dir->d_name);
+		if((filestat.st_mode & S_IFMT) == S_IFDIR)
+		{
+			printf("d");
+		}
+	}
+	printf("\n");
+	closedir(dname);
+}
+
+
+
