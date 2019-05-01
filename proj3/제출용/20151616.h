@@ -6,13 +6,19 @@
 #include <sys/types.h>
 #define MAX 1000
 
-char* instruction[] = {"help", "dir", "quit", "history", "dump", "edit", "fill", "reset", "opcode ", "opcodelist", "h", "d", "q", "hi", "du", "e", "f", "assemble filename", "type filename", "symbol", "progaddr","loader "};
+char* instruction[] = {"help", "dir", "quit", "history", "dump", "edit", "fill", "reset", "opcode ", "opcodelist", "h", "d", "q", "hi", "du", "e", "f", "assemble filename", "type filename", "symbol", "progaddr","loader ","bp ","bp"};
 
 typedef struct __node
 {
 	char InputString[MAX];
 	struct __node* link;
 } NODE;
+
+typedef struct __bpnode
+{
+	unsigned int bp;
+	struct __bpnode* link;
+} BP;
 
 typedef struct HASH__node
 {
@@ -28,6 +34,28 @@ typedef struct SYM__node
 	char subr[10];
 	struct SYM__node* link;
 } SYM;
+
+typedef struct ESYM__node
+{
+	char csect[10];
+	char symname[10];
+	unsigned int address;
+	unsigned int length;
+	struct ESYM__node* link;
+} ESYM;
+
+typedef struct LSYM__node
+{
+	int laddress;
+	struct LSYM__node* link;
+} LSYM;
+
+typedef struct DSYM__node
+{
+	int daddress;
+	char defname[10];
+	struct DSYM__node* link;
+} DSYM;
 
 enum Reg{RegA=0,RegX=1,RegL=2,RegB=3,RegS=4,RegT=5,RegF=6,RegPC=8,RegSW=9};
 enum Flags{FlagX=8,FlagB=4,FlagP=2,FlagE=1};
@@ -58,6 +86,7 @@ void FillMem(int idxs, int idxe, int val);
 void CreateHash();
 void CreateSym(char* newsubr,int newline);
 void ResetSym();
+void ResetEsym();
 int HashFunc(char* input);
 int PrintOp(char* input);
 void PrintOpList();
@@ -73,12 +102,29 @@ void Pass1(char* input);
 void Pass2(char* input,int endloc);
 int Progaddr(char* input);
 int Loader(char* input);
+int Extsymtab(char* input);
+void AddCsect(char* csectname, int addrtemp, int length);
+int AddEsym(char* symname, int addrtemp);
+int AddLsym(int index, unsigned int address);
+int GetCsect(char* csectname);
+int GetEsymtab(char* symname);
+int GetLsymtab(int index);
+void PrintExtsymtab();
+void SetBp(char* input);
+void PrintBp();
+void LoadMem(char* fname);
+void ModMem(char* fname);
 
 unsigned char mem[1048576];
 HASH** hashtable;
+BP* bphead=NULL;
 SYM* symboltable = NULL;
 SYM* temp = NULL;
+ESYM* esymboltable=NULL;
+ESYM* etemp = NULL;
+LSYM* lsymboltable=NULL;
 int startaddr=0;
+int totallength=0;
 
 
 

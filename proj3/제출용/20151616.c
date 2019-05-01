@@ -8,7 +8,8 @@ int main()
 		//array to save the input line
 		int num1=0,num2=0,num3=0;
 		//int variables to save the number inputs in dump, edit, fill etc.
-		int addr=0;
+		int addr=-1;
+		unsigned int tempaddr=0;
 		//saves the index of the last visited memory
 		memset(mem,0,sizeof(char)*1048576);
 		memset(input,0,sizeof(char)*MAX);
@@ -120,11 +121,30 @@ int main()
 				}
 				else if(!strncmp(input, instruction[21],7))
 				{
+					tempaddr = startaddr;
+					etemp = esymboltable;
+					esymboltable = NULL;
 					if(!Loader(input))
 					{
+						esymboltable = etemp;
 						printf("Input file does not exist or in a wrong format!\n");
+						startaddr = tempaddr;
 						continue;
 					}
+					startaddr = tempaddr;
+					PrintExtsymtab();
+					totallength=0;
+					ResetEsym();
+					InputHistory(&head, input);
+				}
+				else if(!strncmp(input, instruction[22],3))
+				{
+					SetBp(input);
+					InputHistory(&head, input);
+				}
+				else if(!strcmp(input, instruction[23]))
+				{
+					PrintBp();
 					InputHistory(&head, input);
 				}
 
@@ -843,6 +863,25 @@ int StrToDec(char* input)
 		return val;
 }
 
+int HexToDec(unsigned char* input)
+{
+	int i=0;
+	int val=0;
+	while(input[i] != '\0')
+	{
+		val *= 16;
+		if((64< input[i]) && input[i] < 71)
+		{
+			val += (input[i]-55);
+		}
+		else
+		{
+			val += (input[i]-'0');
+		}
+		++i;
+	}
+	return val;
+}
 int GetCom(char* input)
 		//Returns the number of ','(commas) in a string
 {
@@ -1312,7 +1351,14 @@ void PrintAsc(int start, int end)
 				for(; curridx<=end; ++curridx)
 						//print the ascii codes from start to end
 				{
+					if((mem[curridx] < 32) || (mem[curridx] > 126))
+					{
+						printf(".");
+					}
+					else
+					{
 						printf("%c",mem[curridx]);
+					}
 				}
 				for(;curridx<temp+16;curridx++)
 				{
@@ -1325,7 +1371,14 @@ void PrintAsc(int start, int end)
 				//when start is the first index of the line
 				for(curridx = start; curridx<=end;++curridx)
 				{
+					if((mem[curridx] < 32) || (mem[curridx] > 126))
+					{
+						printf(".");
+					}
+					else
+					{
 						printf("%c",mem[curridx]);
+					}
 				}
 				if(curridx%16)
 				{
@@ -1934,7 +1987,6 @@ int Progaddr(char* input)
 int Loader(char* input)
 {
 	char fname[MAX];
-	int wnum=0;
 	int index=7;
 	int maxindex=strlen(input)-1;
 	while(index<maxindex)
@@ -1947,8 +1999,457 @@ int Loader(char* input)
 		sscanf(input+index,"%s",fname);
 		index+=strlen(fname);
 		//function to open specific file and read length from first line
-printf("%s",fname);
+		if(!Extsymtab(fname))
+		{
+			return 0;
+		}
 		//
 		++index;
 	}
+	index=7;
+	while(index<maxindex)
+	{
+		if(input[index] == ' ')
+		{
+			++index;
+			continue;
+		}
+		sscanf(input+index,"%s",fname);
+		index+=strlen(fname);
+		//function to open specific file and read length from first line
+		LoadMem(fname);
+	//loading it on the memory@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+		ModMem(fname);
+		//
+		++index;
+	}//completed making external symbol table
+
+	return 1;
+}
+
+int Extsymtab(char* filename)
+//creates a external symbol table nodes for a single object file
+{
+	char buf[MAX];
+	char csectname[10];
+	char symname[10];
+	int addrtemp=0;
+	int length=0;
+	int index=1;
+	int wnum=0;
+	FILE* fp;
+	memset(buf,0,sizeof(char)*MAX);
+	if(!(fp = fopen(filename,"r")))
+	{
+		return 0;
+	}
+	if(!fgets(buf,MAX,fp))
+	//read first line for recognizing csect name and head record
+	{
+		printf("file head record not in format!\n");
+	}
+	sscanf(buf+1,"%s %06X%06X",csectname,&addrtemp,&length);
+	AddCsect(csectname,addrtemp,length);
+	totallength += length;
+	fgets(buf,MAX,fp);
+	while(sscanf(buf+index,"%s %06X",symname,&addrtemp)!= -1)
+	{
+		if(!AddEsym(symname, addrtemp))
+		{
+			return 0;
+		}
+		index += 12;
+	}
+	startaddr += length;
+	//at the end of the external symboltable creation of the obj file, increase the starting address
+}
+
+void AddCsect(char* csectname, int addrtemp, int length)
+{
+	ESYM* newnode = (ESYM*)malloc(sizeof(ESYM));
+	ESYM* currnode = esymboltable;
+	strcpy(newnode->csect, csectname);
+	memset(newnode->symname,0,sizeof(char)*10);
+	newnode->address = (startaddr+addrtemp);
+	newnode->length = length;
+	newnode->link = NULL;
+
+
+//newnode initialization
+	if(currnode == NULL)
+	{
+		esymboltable = newnode;
+		return;
+	}
+	while(currnode->link != NULL)
+	{
+		currnode = currnode->link;
+	}
+	currnode->link = newnode;
+	return;
+}
+
+int AddEsym(char* symname, int addrtemp)
+{
+	ESYM* newnode = (ESYM*)malloc(sizeof(ESYM));
+	ESYM* currnode=esymboltable;
+	memset(newnode->csect,0,sizeof(char)*10);
+	strcpy(newnode->symname,symname);
+	newnode->address = (startaddr+addrtemp);
+	newnode->length = -1;
+	newnode->link = NULL;
+	if(currnode == NULL)
+	{
+		printf("objectfile has no preceding program label!\n");
+		return 0;
+	}
+	while(currnode->link !=NULL)
+	{
+		currnode = currnode -> link;
+	}
+	currnode->link = newnode;
+	return 1;
+}
+
+int AddLsymtab(int index, unsigned int address)
+{
+	LSYM* newnode = (LSYM*)malloc(sizeof(LSYM));
+	LSYM* currnode = lsymboltable;
+	int curridx=1;
+	newnode->laddress = address;
+	if(lsymboltable == NULL)
+	{
+		lsymboltable = newnode;
+		return 1;
+	}
+	while(++curridx < index)
+	{
+		if(currnode->link == NULL)
+		{
+			printf("error : node number not right!\n");
+			return 0;
+		}
+		currnode = currnode->link;
+	}
+	currnode->link = newnode;
+	return 1;
+}
+
+void PrintExtsymtab()
+{
+		ESYM* currnode = esymboltable;
+		if(currnode == NULL)
+		{
+				printf("Empty external symbol node!\n");
+				return;
+		}
+		printf("\tcontrol\t\tsymbol\t\taddress\t\tlength\n");
+		printf("\tsection\t\tname\n");
+		printf("\t--------------------------------------------------\n");
+		while(currnode != NULL)
+		{
+				printf("\t%s\t\t%s\t\t%04X",currnode->csect,currnode->symname,currnode->address);
+				if(currnode->length != -1)
+				{
+					printf("\t\t%04X",currnode->length);
+				}
+				printf("\n");
+				currnode = currnode -> link;
+		}
+		printf("\t--------------------------------------------------\n");
+		printf("\t\t\t\t\ttotal length\t%04X\n",totallength);
+		return;
+
+}
+
+void PrintLsymtab()
+{
+		LSYM* currnode = lsymboltable;
+		if(currnode == NULL)
+		{
+				printf("Empty local symbol node!\n");
+				return;
+		}
+		printf("\tladdress\n");
+		printf("\t--------------------------------------------------\n");
+		while(currnode != NULL)
+		{
+				printf("\t%04X",currnode->laddress);
+				printf("\n");
+				currnode = currnode -> link;
+		}
+		printf("\t--------------------------------------------------\n");
+		return;
+
+}
+
+void ResetEsym()
+{
+		ESYM* deletenode = etemp;
+		while(etemp != NULL)
+		{
+				deletenode = etemp;
+				etemp = etemp->link;
+				deletenode->link = NULL;
+				free(deletenode);
+		}
+		return;
+
+}
+
+void SetBp(char* input)
+{
+	int address=0;
+	BP* newnode = (BP*)malloc(sizeof(BP));
+	BP* currnode = bphead;
+	BP* tempnode=NULL;
+	if(sscanf(input+3,"%X",&address)==-1)
+	{
+		printf("input not a decimal number!\n");
+		return;
+	}
+	//tokenize input and get address
+	newnode->bp = address;
+	if(currnode == NULL)
+	{
+		bphead = newnode;
+		return;
+	}
+	if(currnode->bp > address)
+	{
+		newnode->link = currnode;
+		bphead = newnode;
+		return;
+	}
+	while(currnode->bp < address)
+	{
+		if(currnode->bp == address)
+		{
+			return;
+		}
+		if(currnode->link == NULL)
+		{
+			currnode->link = newnode;
+			return;
+		}
+		tempnode = currnode;
+		currnode = currnode->link;
+	}
+	//when address is between two nodes
+	newnode->link = tempnode->link;
+	tempnode->link = newnode;
+	return;
+}
+	
+void PrintBp()
+{
+		BP* currnode = bphead;
+		if(currnode == NULL)
+		{
+				printf("Empty breakpoint node!\n");
+				return;
+		}
+		printf("\t\tbreakpoint\n");
+		printf("\t\t----------\n");
+		while(currnode != NULL)
+		{
+				printf("\t\t%04X\n",currnode->bp);
+				currnode = currnode -> link;
+		}
+		return;
+
+}
+
+void LoadMem(char* fname)
+//fname contains the name of the obj file ex) "proga.obj"
+{
+	FILE* fp;
+	char buf[MAX];
+	char pname[MAX];
+	unsigned int index=0, maxindex=0, paddress=0, taddress=0;
+	int hb=0;
+	memset(buf,0,sizeof(char)*MAX);
+	memset(pname,0,sizeof(char)*MAX);
+	fp = fopen(fname,"r");
+	while(fgets(buf,MAX,fp))
+	{
+		index=0;
+		if((buf[0] == '.'))
+		{
+			continue;
+		}
+		else if(buf[0] == 'H')
+		{
+			sscanf(buf+1,"%s",pname);
+			paddress = GetCsect(pname);
+		}
+		else if(buf[0] == 'E')
+		{
+			break;
+		}
+		else if(buf[0] == 'T')
+		{
+			sscanf(buf+1,"%06X%02X",&taddress,&maxindex);
+			index+=4;
+			while(sscanf(buf+1+(index*2),"%02X",&hb) != -1)
+			{
+				EditMem(paddress+taddress+index-4,hb);
+				index++;
+			}
+		}
+	}
+	return;
+}
+
+int GetCsect(char* csectname)
+{
+	ESYM* currnode = esymboltable;
+	while(currnode!=NULL)
+	{
+		if(!strcmp(currnode->csect,csectname))
+		{
+			return currnode->address;
+		}
+		if(currnode->link ==NULL)
+		{
+			printf("error : program name not found!\n");
+			return -1;
+		}
+		currnode = currnode->link;
+	}
+	return 0;
+}
+
+int GetEsymtab(char* input)
+{
+	ESYM* currnode = esymboltable;
+	if(currnode == NULL)
+	{
+		printf("error : empty external symbol table!\n");
+		return -1;
+	}
+	while(currnode->link != NULL)
+	{
+		if(!strcmp(currnode->symname,input))
+		{
+			return currnode->address;
+		}
+		currnode = currnode->link;
+	}
+	if(!strcmp(currnode->symname,input))
+	{
+		return currnode->address;
+	}
+	else
+	{
+		printf("error : node not found!\n");
+		return -1;
+	}
+}
+
+int GetLsymtab(int index)
+{
+	LSYM* currnode = lsymboltable;
+	int curridx=1;
+	if(currnode == NULL)
+	{
+		printf("error : local symbol table empty!\n");
+		return -1;
+	}
+	while(curridx < index)
+	{
+		currnode = currnode->link;
+		++curridx;
+	}
+	return currnode->laddress;
+}
+
+void ModMem(char* fname)
+{
+	FILE* fp;
+	char buf[MAX];
+	char pname[MAX];
+	char refname[10];
+	unsigned int index=0, modlength=0, paddress=0, taddress=0, sindex=1, disp=0;
+	int hb=0;
+	memset(buf,0,sizeof(char)*MAX);
+	memset(pname,0,sizeof(char)*MAX);
+	memset(refname,0,sizeof(char)*10);
+	fp = fopen(fname,"r");
+	while(fgets(buf,MAX,fp))
+	{
+		index=0;
+		if((buf[0] == '.'))
+		{
+			continue;
+		}
+		else if(buf[0] == 'H')
+		{
+			sscanf(buf+1,"%s",pname);
+			paddress = GetCsect(pname);
+			AddLsymtab(sindex,paddress);
+			//00 local symtable node becomes the head node
+		}
+		else if(buf[0] == 'D')
+		{
+			while(sscanf(buf+1+(index*12),"%s %06X",refname,&taddress)!=-1)
+			{
+				index++;
+				//AddDsymtab(sindex,taddress);
+				//move to link index-1 times to add local symtable.
+			}
+		}
+		else if(buf[0] == 'R')
+		{
+			while(sscanf(buf+1+(index*8),"%02X%s",&sindex,refname)!=-1)
+			{
+				index++;
+				AddLsymtab(sindex,GetEsymtab(refname));
+				//move to link index-1 times to add local symtable.
+			}
+		}
+		else if(buf[0] == 'M')
+		{
+		//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@change needed!
+			sscanf(buf+1,"%06X%02X",&taddress,&modlength);
+			/*while(sscanf(buf+1+(index*2),"%02X",&hb) != -1)
+			{
+				EditMem(paddress+taddress+index-4,hb);
+				index++;
+			}*/
+			if(modlength == 5)
+			//format4 modification
+			{
+				disp = (mem[taddress]%16)*65536+mem[taddress+1]*256+mem[taddress+2];
+			}
+			else
+			//format3 modification
+			{
+				disp = mem[taddress]*65536+mem[taddress+1]*256+mem[taddress+2];
+			}
+			sscanf(buf+10,"%02X",&sindex);
+			if(buf[9] == '+')
+			{
+				disp += GetLsymtab(sindex);
+			}
+			else
+			{
+				disp -= GetLsymtab(sindex);
+			}
+			if(modlength == 5)
+			{
+				mem[taddress]/= 16;
+				mem[taddress] += disp%1048576/65536;
+				mem[taddress+1] = disp%65536/256;
+				mem[taddress+2] = disp%256;
+			}
+			else
+			{
+				mem[taddress] = disp%16777216/65536;
+				mem[taddress+1] = disp%65536/256;
+				mem[taddress+2] = disp%256;
+			}
+		}
+	}
+	return;
 }
