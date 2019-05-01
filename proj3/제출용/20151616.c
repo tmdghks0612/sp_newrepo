@@ -147,6 +147,11 @@ int main()
 					PrintBp();
 					InputHistory(&head, input);
 				}
+				else if(!strcmp(input, instruction[24]))
+				{
+					Run();
+					InputHistory(&head, input);
+				}
 
 		}while((strcmp(input, "quit")&&strcmp(input, "q")));
 		//terminates the program when input was q or quit
@@ -1988,7 +1993,9 @@ int Loader(char* input)
 {
 	char fname[MAX];
 	int index=7;
+	int tempaddr=0;
 	int maxindex=strlen(input)-1;
+	tempaddr=startaddr;
 	while(index<maxindex)
 	{
 		if(input[index] == ' ')
@@ -2007,6 +2014,7 @@ int Loader(char* input)
 		++index;
 	}
 	index=7;
+	startaddr = tempaddr;
 	while(index<maxindex)
 	{
 		if(input[index] == ' ')
@@ -2135,6 +2143,24 @@ int AddLsymtab(int index, unsigned int address)
 	return 1;
 }
 
+int AddDsymtab(char* refname, int address)
+{
+	DSYM* newnode = (DSYM*)malloc(sizeof(DSYM));
+	DSYM* currnode = dsymboltable;
+	newnode->daddress = address;
+	newnode->link=NULL;
+	if(dsymboltable == NULL)
+	{
+		dsymboltable = newnode;
+		return 1;
+	}
+	while(dsymboltable->link != NULL)
+	{
+		dsymboltable = dsymboltable->link;
+	}
+	dsymboltable->link = newnode;
+}
+
 void PrintExtsymtab()
 {
 		ESYM* currnode = esymboltable;
@@ -2203,6 +2229,8 @@ void SetBp(char* input)
 	BP* newnode = (BP*)malloc(sizeof(BP));
 	BP* currnode = bphead;
 	BP* tempnode=NULL;
+	newnode->link=NULL;
+	newnode->bp=-1;
 	if(sscanf(input+3,"%X",&address)==-1)
 	{
 		printf("input not a decimal number!\n");
@@ -2225,6 +2253,7 @@ void SetBp(char* input)
 	{
 		if(currnode->bp == address)
 		{
+			printf("error : same bp input!\n");
 			return;
 		}
 		if(currnode->link == NULL)
@@ -2239,6 +2268,26 @@ void SetBp(char* input)
 	newnode->link = tempnode->link;
 	tempnode->link = newnode;
 	return;
+}
+
+int GetBp(int address)
+{
+	BP* currnode = bphead;
+	if(currnode == NULL)
+	//when there is no bp stored in the list
+	{
+		return -1;
+	}
+	while(address>currnode->bp)
+	{
+		if(currnode->link == NULL)
+		//when there is no bp bigger than address
+		{
+			return -1;
+		}
+		currnode = currnode->link;
+	}
+	return currnode->bp;
 }
 	
 void PrintBp()
@@ -2395,28 +2444,25 @@ void ModMem(char* fname)
 			while(sscanf(buf+1+(index*12),"%s %06X",refname,&taddress)!=-1)
 			{
 				index++;
-				//AddDsymtab(sindex,taddress);
+				AddDsymtab(refname,taddress);
 				//move to link index-1 times to add local symtable.
 			}
 		}
 		else if(buf[0] == 'R')
 		{
+			index=0;
+			//when input was came in from alphabet first@@@@@@@@@@@@@@@@@@@@@@
 			while(sscanf(buf+1+(index*8),"%02X%s",&sindex,refname)!=-1)
 			{
 				index++;
-				AddLsymtab(sindex,GetEsymtab(refname));
+				AddLsymtab(index+1,GetEsymtab(refname));
 				//move to link index-1 times to add local symtable.
 			}
 		}
 		else if(buf[0] == 'M')
 		{
-		//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@change needed!
 			sscanf(buf+1,"%06X%02X",&taddress,&modlength);
-			/*while(sscanf(buf+1+(index*2),"%02X",&hb) != -1)
-			{
-				EditMem(paddress+taddress+index-4,hb);
-				index++;
-			}*/
+			taddress += GetCsect(pname);
 			if(modlength == 5)
 			//format4 modification
 			{
@@ -2438,7 +2484,7 @@ void ModMem(char* fname)
 			}
 			if(modlength == 5)
 			{
-				mem[taddress]/= 16;
+				mem[taddress]/16*16;
 				mem[taddress] += disp%1048576/65536;
 				mem[taddress+1] = disp%65536/256;
 				mem[taddress+2] = disp%256;
@@ -2452,4 +2498,68 @@ void ModMem(char* fname)
 		}
 	}
 	return;
+}
+
+void PrintReg()
+{
+	int i=0;
+	printf("\t\tA : %06X X : %06X\n",regarray[RegA],regarray[RegX]);
+	printf("\t\tL : %06X PC: %06X\n",regarray[RegL],regarray[RegPC]);
+	printf("\t\tB : %06X S : %06X\n",regarray[RegB],regarray[RegS]);
+	printf("\t\tT : %06X\n",regarray[RegT]);
+}
+
+void Run()
+{
+	unsigned int curraddr = regarray[RegPC];
+	unsigned int endaddr = totallength+startaddr;
+	unsigned int bpaddr=0;
+	int format=0;
+	int opcode=0;
+	int disp=0;
+	regarray[RegPC] = startaddr;
+	bpaddr = GetBp(startaddr);
+	while(curraddr<endaddr)
+	{
+		if(curraddr == bpaddr)
+		{
+			PrintReg();
+			printf("Stop at checkpoint[%04X]\n",bpaddr);
+			bpaddr = GetBp(bpaddr);
+		}
+		opcode = mem[curraddr]/4*4;
+		disp = mem[curraddr+1]%16*256+mem[curraddr+2];
+		//calculate displacement
+		//@@@@@@@@@@@@@@@@@@@@@@
+		if(opcode == 0)
+		//instruction LDA
+		{
+			format = 3;
+			regarray[RegA] = disp;
+		}
+		if(opcode == 104)
+		//instruction LDB
+		{
+			format = 3;
+			regarray[RegB] = disp;
+		}
+		if(opcode == 116)
+		//instruction LDT
+		{
+			format = 3;
+			regarray[RegT] = disp;
+		}
+
+		//@@@@@@@@@@@@@@@@@@@@@@
+		if(format == 3)
+		{
+			format += mem[curraddr+1]/16%2;
+			//add e flag to find what instruction is in format4
+		}
+		curraddr+=format;
+		regarray[RegPC] = curraddr;
+	}
+
+	PrintReg();
+	printf("\tEnd program.\n");
 }

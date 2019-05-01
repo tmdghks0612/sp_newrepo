@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #define MAX 1000
 
-char* instruction[] = {"help", "dir", "quit", "history", "dump", "edit", "fill", "reset", "opcode ", "opcodelist", "h", "d", "q", "hi", "du", "e", "f", "assemble filename", "type filename", "symbol", "progaddr","loader ","bp ","bp"};
+char* instruction[] = {"help", "dir", "quit", "history", "dump", "edit", "fill", "reset", "opcode ", "opcodelist", "h", "d", "q", "hi", "du", "e", "f", "assemble filename", "type filename", "symbol", "progaddr","loader ","bp ","bp","run"};
 
 typedef struct __node
 {
@@ -114,6 +114,8 @@ void SetBp(char* input);
 void PrintBp();
 void LoadMem(char* fname);
 void ModMem(char* fname);
+void PrintReg();
+void Run();
 
 unsigned char mem[1048576];
 HASH** hashtable;
@@ -123,8 +125,9 @@ SYM* temp = NULL;
 ESYM* esymboltable=NULL;
 ESYM* etemp = NULL;
 LSYM* lsymboltable=NULL;
+DSYM* dsymboltable=NULL;
 int startaddr=0;
 int totallength=0;
-
+unsigned int regarray[10];
 
 
