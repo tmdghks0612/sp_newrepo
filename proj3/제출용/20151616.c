@@ -9,7 +9,6 @@ int main()
 		int num1=0,num2=0,num3=0;
 		//int variables to save the number inputs in dump, edit, fill etc.
 		int addr=-1;
-		unsigned int tempaddr=0;
 		//saves the index of the last visited memory
 		memset(mem,0,sizeof(char)*1048576);
 		memset(input,0,sizeof(char)*MAX);
@@ -112,45 +111,45 @@ int main()
 				}
 				else if(!strncmp(input, instruction[20], 8))
 				{
-					if(!Progaddr(input))
-					{
-						printf("Input value not available!\n");
-						continue;
-					}
-					InputHistory(&head, input);
+						if(!Progaddr(input))
+						{
+								printf("Input value not available!\n");
+								continue;
+						}
+						InputHistory(&head, input);
 				}
 				else if(!strncmp(input, instruction[21],7))
 				{
-					tempaddr = startaddr;
-					etemp = esymboltable;
-					esymboltable = NULL;
-					if(!Loader(input))
-					{
-						esymboltable = etemp;
-						printf("Input file does not exist or in a wrong format!\n");
+						tempaddr = startaddr;
+						etemp = esymboltable;
+						esymboltable = NULL;
+						if(!Loader(input))
+						{
+								esymboltable = etemp;
+								printf("Input file does not exist or in a wrong format!\n");
+								startaddr = tempaddr;
+								continue;
+						}
 						startaddr = tempaddr;
-						continue;
-					}
-					startaddr = tempaddr;
-					PrintExtsymtab();
-					totallength=0;
-					ResetEsym();
-					InputHistory(&head, input);
+						PrintExtsymtab();
+						totallength=0;
+						ResetEsym();
+						InputHistory(&head, input);
 				}
 				else if(!strncmp(input, instruction[22],3))
 				{
-					SetBp(input);
-					InputHistory(&head, input);
+						SetBp(input);
+						InputHistory(&head, input);
 				}
 				else if(!strcmp(input, instruction[23]))
 				{
-					PrintBp();
-					InputHistory(&head, input);
+						PrintBp();
+						InputHistory(&head, input);
 				}
 				else if(!strcmp(input, instruction[24]))
 				{
-					Run();
-					InputHistory(&head, input);
+						Run();
+						InputHistory(&head, input);
 				}
 
 		}while((strcmp(input, "quit")&&strcmp(input, "q")));
@@ -262,11 +261,11 @@ int IsAssemble(char* input)
 												i=0;
 												while(oper[i]!='\0')
 												{
-													if(!IsNum(oper[i]))
-													{
-														errorflag = 1;
-													}
-													i++;
+														if(!IsNum(oper[i]))
+														{
+																errorflag = 1;
+														}
+														i++;
 												}
 										}
 										else if(!strcmp(iname,"RESB"))
@@ -276,11 +275,11 @@ int IsAssemble(char* input)
 												i=0;
 												while(oper[i]!='\0')
 												{
-													if(!IsNum(oper[i]))
-													{
-														errorflag = 1;
-													}
-													i++;
+														if(!IsNum(oper[i]))
+														{
+																errorflag = 1;
+														}
+														i++;
 												}
 										}
 										else if(!strcmp(iname,"WORD"))
@@ -318,7 +317,7 @@ int IsAssemble(char* input)
 												}
 												else
 												{
-													errorflag=1;
+														errorflag=1;
 												}
 										}
 										else if(!strcmp(iname,"BASE"))
@@ -397,11 +396,11 @@ int IsAssemble(char* input)
 												i=0;
 												while(oper[i]!='\0')
 												{
-													if(!IsNum(oper[i]))
-													{
-														errorflag = 1;
-													}
-													i++;
+														if(!IsNum(oper[i]))
+														{
+																errorflag = 1;
+														}
+														i++;
 												}
 										}
 										else if(!strcmp(iname,"RESB"))
@@ -411,11 +410,11 @@ int IsAssemble(char* input)
 												i=0;
 												while(oper[i]!='\0')
 												{
-													if(!IsNum(oper[i]))
-													{
-														errorflag = 1;
-													}
-													i++;
+														if(!IsNum(oper[i]))
+														{
+																errorflag = 1;
+														}
+														i++;
 												}
 										}
 										else if(!strcmp(iname,"WORD"))
@@ -454,7 +453,7 @@ int IsAssemble(char* input)
 												}
 												else
 												{
-													errorflag=1;
+														errorflag=1;
 												}
 										}
 										else if(!strcmp(iname,"BASE"))
@@ -540,12 +539,12 @@ int IsAssemble(char* input)
 										//format2
 										if(!strcmp(iname,"SVC"))
 										{
-											fprintf(lstfp,"%02X%01X00\n",opcode,StrToDec(oper));
-											break;
+												fprintf(lstfp,"%02X%01X00\n",opcode,StrToDec(oper));
+												break;
 										}
 										else if(!strcmp(iname,"SHIFTL"))
 										{
-											fprintf(lstfp,"%02X%01X%01X\n",opcode,GetReg(oper),StrToDec(oper2));
+												fprintf(lstfp,"%02X%01X%01X\n",opcode,GetReg(oper),StrToDec(oper2));
 										}
 										fprintf(lstfp,"%02X%01X",opcode,GetReg(oper));
 										if(GetReg(oper2)>0)
@@ -870,22 +869,22 @@ int StrToDec(char* input)
 
 int HexToDec(unsigned char* input)
 {
-	int i=0;
-	int val=0;
-	while(input[i] != '\0')
-	{
-		val *= 16;
-		if((64< input[i]) && input[i] < 71)
+		int i=0;
+		int val=0;
+		while(input[i] != '\0')
 		{
-			val += (input[i]-55);
+				val *= 16;
+				if((64< input[i]) && input[i] < 71)
+				{
+						val += (input[i]-55);
+				}
+				else
+				{
+						val += (input[i]-'0');
+				}
+				++i;
 		}
-		else
-		{
-			val += (input[i]-'0');
-		}
-		++i;
-	}
-	return val;
+		return val;
 }
 int GetCom(char* input)
 		//Returns the number of ','(commas) in a string
@@ -1356,14 +1355,14 @@ void PrintAsc(int start, int end)
 				for(; curridx<=end; ++curridx)
 						//print the ascii codes from start to end
 				{
-					if((mem[curridx] < 32) || (mem[curridx] > 126))
-					{
-						printf(".");
-					}
-					else
-					{
-						printf("%c",mem[curridx]);
-					}
+						if((mem[curridx] < 32) || (mem[curridx] > 126))
+						{
+								printf(".");
+						}
+						else
+						{
+								printf("%c",mem[curridx]);
+						}
 				}
 				for(;curridx<temp+16;curridx++)
 				{
@@ -1376,14 +1375,14 @@ void PrintAsc(int start, int end)
 				//when start is the first index of the line
 				for(curridx = start; curridx<=end;++curridx)
 				{
-					if((mem[curridx] < 32) || (mem[curridx] > 126))
-					{
-						printf(".");
-					}
-					else
-					{
-						printf("%c",mem[curridx]);
-					}
+						if((mem[curridx] < 32) || (mem[curridx] > 126))
+						{
+								printf(".");
+						}
+						else
+						{
+								printf("%c",mem[curridx]);
+						}
 				}
 				if(curridx%16)
 				{
@@ -1684,7 +1683,7 @@ void Pass1(char* input)
 		{
 				if(buf1[0] == '.')
 				{
-					continue;
+						continue;
 				}
 				if(IsCap(buf1[0]))
 						//First letter is a capital. Which means the line is a subroutine
@@ -1697,7 +1696,7 @@ void Pass1(char* input)
 								format=0;
 								if(!strcmp(iname,"START"))
 								{
-									sscanf(oper,"%X",&loc);
+										sscanf(oper,"%X",&loc);
 								}
 								else if(!strcmp(iname,"END"))
 								{
@@ -1769,7 +1768,7 @@ void Pass1(char* input)
 								format=0;
 								if(!strcmp(iname,"START"))
 								{
-									sscanf(oper,"%X",&loc);
+										sscanf(oper,"%X",&loc);
 								}
 								else if(!strcmp(iname,"END"))
 								{
@@ -1974,191 +1973,227 @@ void Pass2(char *input,int endloc)
 
 int Progaddr(char* input)
 {
-	char buf1[MAX];
-	int tempnum=0;
-	int wnum=0;
-	wnum=sscanf(input, "%s %X",buf1,&tempnum);
-	if(wnum != 2)
-	{
-		return 0;
-	}
-	else
-	{
-		startaddr = tempnum;
-		return 1;
-	}
+		char buf1[MAX];
+		int tempnum=0;
+		int wnum=0;
+		wnum=sscanf(input, "%s %X",buf1,&tempnum);
+		if(wnum != 2)
+		{
+				return 0;
+		}
+		else
+		{
+				startaddr = tempnum;
+				return 1;
+		}
 }
 
 int Loader(char* input)
 {
-	char fname[MAX];
-	int index=7;
-	int tempaddr=0;
-	int maxindex=strlen(input)-1;
-	tempaddr=startaddr;
-	while(index<maxindex)
-	{
-		if(input[index] == ' ')
+		char fname[MAX];
+		int index=7;
+		int tempaddr=0;
+		int maxindex=strlen(input)-1;
+		tempaddr=startaddr;
+		while(index<maxindex)
 		{
-			++index;
-			continue;
+				if(input[index] == ' ')
+				{
+						++index;
+						continue;
+				}
+				sscanf(input+index,"%s",fname);
+				index+=strlen(fname);
+				//function to open specific file and read length from first line
+				if(!Extsymtab(fname))
+				{
+						return 0;
+				}
+				//
+				++index;
 		}
-		sscanf(input+index,"%s",fname);
-		index+=strlen(fname);
-		//function to open specific file and read length from first line
-		if(!Extsymtab(fname))
+		index=7;
+		startaddr = tempaddr;
+		while(index<maxindex)
 		{
-			return 0;
-		}
-		//
-		++index;
-	}
-	index=7;
-	startaddr = tempaddr;
-	while(index<maxindex)
-	{
-		if(input[index] == ' ')
-		{
-			++index;
-			continue;
-		}
-		sscanf(input+index,"%s",fname);
-		index+=strlen(fname);
-		//function to open specific file and read length from first line
-		LoadMem(fname);
-	//loading it on the memory@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-		ModMem(fname);
-		//
-		++index;
-	}//completed making external symbol table
+				if(input[index] == ' ')
+				{
+						++index;
+						continue;
+				}
+				sscanf(input+index,"%s",fname);
+				index+=strlen(fname);
+				//function to open specific file and read length from first line
+				LoadMem(fname);
+				//loading it on the memory@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+				ModMem(fname);
+				//
+				++index;
+		}//completed making external symbol table
 
-	return 1;
+		return 1;
 }
 
 int Extsymtab(char* filename)
-//creates a external symbol table nodes for a single object file
+		//creates a external symbol table nodes for a single object file
 {
-	char buf[MAX];
-	char csectname[10];
-	char symname[10];
-	int addrtemp=0;
-	int length=0;
-	int index=1;
-	int wnum=0;
-	FILE* fp;
-	memset(buf,0,sizeof(char)*MAX);
-	if(!(fp = fopen(filename,"r")))
-	{
-		return 0;
-	}
-	if(!fgets(buf,MAX,fp))
-	//read first line for recognizing csect name and head record
-	{
-		printf("file head record not in format!\n");
-	}
-	sscanf(buf+1,"%s %06X%06X",csectname,&addrtemp,&length);
-	AddCsect(csectname,addrtemp,length);
-	totallength += length;
-	fgets(buf,MAX,fp);
-	while(sscanf(buf+index,"%s %06X",symname,&addrtemp)!= -1)
-	{
-		if(!AddEsym(symname, addrtemp))
+		char buf[MAX];
+		char csectname[10];
+		char symname[10];
+		int addrtemp=0;
+		int length=0;
+		int index=1;
+		int wnum=0;
+		FILE* fp;
+		memset(buf,0,sizeof(char)*MAX);
+		if(!(fp = fopen(filename,"r")))
 		{
-			return 0;
+				return 0;
 		}
-		index += 12;
-	}
-	startaddr += length;
-	//at the end of the external symboltable creation of the obj file, increase the starting address
+		if(!fgets(buf,MAX,fp))
+				//read first line for recognizing csect name and head record
+		{
+				printf("file head record not in format!\n");
+		}
+		sscanf(buf+1,"%s %06X%06X",csectname,&addrtemp,&length);
+		AddCsect(csectname,addrtemp,length);
+		totallength += length;
+		while(fgets(buf,MAX,fp))
+		{
+			if(buf[0] == 'D')
+			//found definition record
+			{
+				break;
+			}
+		}
+		if(buf[0] != 'D')
+		{
+			printf("no D record found!\n");
+			return 1;
+		}
+		while(sscanf(buf+index,"%s %06X",symname,&addrtemp)!= -1)
+		{
+				if(!AddEsym(symname, addrtemp))
+				{
+						return 0;
+				}
+				index += 12;
+		}
+		startaddr += length;
+		//at the end of the external symboltable creation of the obj file, increase the starting address
 }
 
 void AddCsect(char* csectname, int addrtemp, int length)
 {
-	ESYM* newnode = (ESYM*)malloc(sizeof(ESYM));
-	ESYM* currnode = esymboltable;
-	strcpy(newnode->csect, csectname);
-	memset(newnode->symname,0,sizeof(char)*10);
-	newnode->address = (startaddr+addrtemp);
-	newnode->length = length;
-	newnode->link = NULL;
+		ESYM* newnode = (ESYM*)malloc(sizeof(ESYM));
+		ESYM* currnode = esymboltable;
+		strcpy(newnode->csect, csectname);
+		memset(newnode->symname,0,sizeof(char)*10);
+		newnode->address = (startaddr+addrtemp);
+		newnode->length = length;
+		newnode->link = NULL;
 
 
-//newnode initialization
-	if(currnode == NULL)
-	{
-		esymboltable = newnode;
+		//newnode initialization
+		if(currnode == NULL)
+		{
+				esymboltable = newnode;
+				return;
+		}
+		while(currnode->link != NULL)
+		{
+				currnode = currnode->link;
+		}
+		currnode->link = newnode;
 		return;
-	}
-	while(currnode->link != NULL)
-	{
-		currnode = currnode->link;
-	}
-	currnode->link = newnode;
-	return;
 }
 
 int AddEsym(char* symname, int addrtemp)
 {
-	ESYM* newnode = (ESYM*)malloc(sizeof(ESYM));
-	ESYM* currnode=esymboltable;
-	memset(newnode->csect,0,sizeof(char)*10);
-	strcpy(newnode->symname,symname);
-	newnode->address = (startaddr+addrtemp);
-	newnode->length = -1;
-	newnode->link = NULL;
-	if(currnode == NULL)
-	{
-		printf("objectfile has no preceding program label!\n");
-		return 0;
-	}
-	while(currnode->link !=NULL)
-	{
-		currnode = currnode -> link;
-	}
-	currnode->link = newnode;
-	return 1;
+		ESYM* newnode = (ESYM*)malloc(sizeof(ESYM));
+		ESYM* currnode=esymboltable;
+		memset(newnode->csect,0,sizeof(char)*10);
+		strcpy(newnode->symname,symname);
+		newnode->address = (startaddr+addrtemp);
+		newnode->length = -1;
+		newnode->link = NULL;
+		if(currnode == NULL)
+		{
+				printf("objectfile has no preceding program label!\n");
+				return 0;
+		}
+		while(currnode->link !=NULL)
+		{
+				if(!strcmp(currnode->symname,symname))
+				{
+					printf("same node input\n");
+					return 0;
+				}
+				currnode = currnode -> link;
+		}
+		currnode->link = newnode;
+		return 1;
 }
 
 int AddLsymtab(int index, unsigned int address)
 {
-	LSYM* newnode = (LSYM*)malloc(sizeof(LSYM));
-	LSYM* currnode = lsymboltable;
-	int curridx=1;
-	newnode->laddress = address;
-	if(lsymboltable == NULL)
-	{
-		lsymboltable = newnode;
-		return 1;
-	}
-	while(++curridx < index)
-	{
-		if(currnode->link == NULL)
+		LSYM* newnode = (LSYM*)malloc(sizeof(LSYM));
+		LSYM* currnode = lsymboltable;
+		int curridx=1;
+		newnode->laddress = address;
+		if(lsymboltable == NULL)
 		{
-			printf("error : node number not right!\n");
-			return 0;
+				lsymboltable = newnode;
+				return 1;
 		}
-		currnode = currnode->link;
-	}
-	currnode->link = newnode;
-	return 1;
+		while(++curridx < index)
+		{
+				if(currnode->link == NULL)
+				{
+						printf("error : node number not right!\n");
+						return 0;
+				}
+				currnode = currnode->link;
+		}
+		currnode->link = newnode;
+		return 1;
 }
 
 int AddDsymtab(char* refname, int address)
 {
-	DSYM* newnode = (DSYM*)malloc(sizeof(DSYM));
-	DSYM* currnode = dsymboltable;
-	newnode->daddress = address;
-	newnode->link=NULL;
-	if(dsymboltable == NULL)
-	{
-		dsymboltable = newnode;
-		return 1;
-	}
-	while(dsymboltable->link != NULL)
-	{
-		dsymboltable = dsymboltable->link;
-	}
-	dsymboltable->link = newnode;
+		DSYM* newnode = (DSYM*)malloc(sizeof(DSYM));
+		DSYM* currnode = dsymboltable;
+		newnode->daddress = address;
+		newnode->link=NULL;
+		if(dsymboltable == NULL)
+		{
+				dsymboltable = newnode;
+				return 1;
+		}
+		while(currnode->link != NULL)
+		{
+				currnode = currnode->link;
+		}
+		currnode->link = newnode;
+}
+
+int AddTrec(unsigned int address, int length)
+{
+		TREC* newnode = (TREC*)malloc(sizeof(TREC));
+		TREC* currnode = trecordhead;
+		newnode->address = address;
+		newnode->length = length;
+		newnode->link=NULL;
+		if(trecordhead == NULL)
+		{
+				trecordhead = newnode;
+				return 1;
+		}
+		while(currnode->link != NULL)
+		{
+				currnode = currnode->link;
+		}
+		currnode->link = newnode;
 }
 
 void PrintExtsymtab()
@@ -2177,7 +2212,7 @@ void PrintExtsymtab()
 				printf("\t%s\t\t%s\t\t%04X",currnode->csect,currnode->symname,currnode->address);
 				if(currnode->length != -1)
 				{
-					printf("\t\t%04X",currnode->length);
+						printf("\t\t%04X",currnode->length);
 				}
 				printf("\n");
 				currnode = currnode -> link;
@@ -2225,71 +2260,72 @@ void ResetEsym()
 
 void SetBp(char* input)
 {
-	int address=0;
-	BP* newnode = (BP*)malloc(sizeof(BP));
-	BP* currnode = bphead;
-	BP* tempnode=NULL;
-	newnode->link=NULL;
-	newnode->bp=-1;
-	if(sscanf(input+3,"%X",&address)==-1)
-	{
-		printf("input not a decimal number!\n");
-		return;
-	}
-	//tokenize input and get address
-	newnode->bp = address;
-	if(currnode == NULL)
-	{
-		bphead = newnode;
-		return;
-	}
-	if(currnode->bp > address)
-	{
-		newnode->link = currnode;
-		bphead = newnode;
-		return;
-	}
-	while(currnode->bp < address)
-	{
+		int address=0;
+		char buf[10];
+		BP* newnode = (BP*)malloc(sizeof(BP));
+		BP* currnode = bphead;
+		BP* tempnode=NULL;
+		newnode->link=NULL;
+		newnode->bp=-1;
+		if(sscanf(input+3,"%X %s",&address,buf)!=1)
+		{
+				printf("input not a decimal number!\n");
+				return;
+		}
+		//tokenize input and get address
+		newnode->bp = address;
+		if(currnode == NULL)
+		{
+				bphead = newnode;
+				return;
+		}
+		if(currnode->bp > address)
+		{
+				newnode->link = currnode;
+				bphead = newnode;
+				return;
+		}
+		while(currnode->bp < address)
+		{	
+				if(currnode->link == NULL)
+				{
+						currnode->link = newnode;
+						return;
+				}
+				tempnode = currnode;
+				currnode = currnode->link;
+		}
 		if(currnode->bp == address)
 		{
-			printf("error : same bp input!\n");
-			return;
+				printf("error : same bp input!\n");
+				return;
 		}
-		if(currnode->link == NULL)
-		{
-			currnode->link = newnode;
-			return;
-		}
-		tempnode = currnode;
-		currnode = currnode->link;
-	}
-	//when address is between two nodes
-	newnode->link = tempnode->link;
-	tempnode->link = newnode;
-	return;
+		//when address is between two nodes
+		newnode->link = tempnode->link;
+		tempnode->link = newnode;
+		return;
 }
 
 int GetBp(int address)
 {
-	BP* currnode = bphead;
-	if(currnode == NULL)
-	//when there is no bp stored in the list
-	{
-		return -1;
-	}
-	while(address>currnode->bp)
-	{
-		if(currnode->link == NULL)
-		//when there is no bp bigger than address
+		BP* currnode = bphead;
+		if(currnode == NULL)
+				//when there is no bp stored in the list
 		{
-			return -1;
+				return -1;
 		}
-		currnode = currnode->link;
-	}
-	return currnode->bp;
+		while(address>currnode->bp)
+		{
+				if(currnode->link == NULL)
+						//when there is no bp bigger than address
+				{
+						return -1;
+				}
+				currnode = currnode->link;
+		}
+		return currnode->bp;
 }
-	
+
 void PrintBp()
 {
 		BP* currnode = bphead;
@@ -2310,256 +2346,482 @@ void PrintBp()
 }
 
 void LoadMem(char* fname)
-//fname contains the name of the obj file ex) "proga.obj"
+		//fname contains the name of the obj file ex) "proga.obj"
 {
-	FILE* fp;
-	char buf[MAX];
-	char pname[MAX];
-	unsigned int index=0, maxindex=0, paddress=0, taddress=0;
-	int hb=0;
-	memset(buf,0,sizeof(char)*MAX);
-	memset(pname,0,sizeof(char)*MAX);
-	fp = fopen(fname,"r");
-	while(fgets(buf,MAX,fp))
-	{
-		index=0;
-		if((buf[0] == '.'))
+		FILE* fp;
+		char buf[MAX];
+		char pname[MAX];
+		unsigned int index=0, maxindex=0, paddress=0, taddress=0;
+		int hb=0;
+		memset(buf,0,sizeof(char)*MAX);
+		memset(pname,0,sizeof(char)*MAX);
+		fp = fopen(fname,"r");
+		while(fgets(buf,MAX,fp))
 		{
-			continue;
+				index=0;
+				if((buf[0] == '.'))
+				{
+						continue;
+				}
+				else if(buf[0] == 'H')
+				{
+						sscanf(buf+1,"%s",pname);
+						paddress = GetCsect(pname);
+				}
+				else if(buf[0] == 'E')
+				{
+						break;
+				}
+				else if(buf[0] == 'T')
+				{
+						sscanf(buf+1,"%06X%02X",&taddress,&maxindex);
+						index+=4;
+						while(sscanf(buf+1+(index*2),"%02X",&hb) != -1)
+						{
+								EditMem(paddress+taddress+index-4,hb);
+								index++;
+						}
+						AddTrec(taddress+paddress, maxindex);
+				}
 		}
-		else if(buf[0] == 'H')
-		{
-			sscanf(buf+1,"%s",pname);
-			paddress = GetCsect(pname);
-		}
-		else if(buf[0] == 'E')
-		{
-			break;
-		}
-		else if(buf[0] == 'T')
-		{
-			sscanf(buf+1,"%06X%02X",&taddress,&maxindex);
-			index+=4;
-			while(sscanf(buf+1+(index*2),"%02X",&hb) != -1)
-			{
-				EditMem(paddress+taddress+index-4,hb);
-				index++;
-			}
-		}
-	}
-	return;
+		return;
 }
 
 int GetCsect(char* csectname)
 {
-	ESYM* currnode = esymboltable;
-	while(currnode!=NULL)
-	{
-		if(!strcmp(currnode->csect,csectname))
+		ESYM* currnode = esymboltable;
+		while(currnode!=NULL)
 		{
-			return currnode->address;
+				if(!strcmp(currnode->csect,csectname))
+				{
+						return currnode->address;
+				}
+				if(currnode->link ==NULL)
+				{
+						printf("error : program name not found!\n");
+						return -1;
+				}
+				currnode = currnode->link;
 		}
-		if(currnode->link ==NULL)
-		{
-			printf("error : program name not found!\n");
-			return -1;
-		}
-		currnode = currnode->link;
-	}
-	return 0;
+		return 0;
 }
 
 int GetEsymtab(char* input)
 {
-	ESYM* currnode = esymboltable;
-	if(currnode == NULL)
-	{
-		printf("error : empty external symbol table!\n");
-		return -1;
-	}
-	while(currnode->link != NULL)
-	{
+		ESYM* currnode = esymboltable;
+		if(currnode == NULL)
+		{
+				printf("error : empty external symbol table!\n");
+				return -1;
+		}
+		while(currnode->link != NULL)
+		{
+				if(!strcmp(currnode->symname,input))
+				{
+						return currnode->address;
+				}
+				currnode = currnode->link;
+		}
 		if(!strcmp(currnode->symname,input))
 		{
-			return currnode->address;
+				return currnode->address;
 		}
-		currnode = currnode->link;
-	}
-	if(!strcmp(currnode->symname,input))
-	{
-		return currnode->address;
-	}
-	else
-	{
-		printf("error : node not found!\n");
-		return -1;
-	}
+		else
+		{
+				printf("error : node not found!\n");
+				return -1;
+		}
 }
 
 int GetLsymtab(int index)
 {
-	LSYM* currnode = lsymboltable;
-	int curridx=1;
-	if(currnode == NULL)
-	{
-		printf("error : local symbol table empty!\n");
-		return -1;
-	}
-	while(curridx < index)
-	{
-		currnode = currnode->link;
-		++curridx;
-	}
-	return currnode->laddress;
+		LSYM* currnode = lsymboltable;
+		int curridx=1;
+		if(currnode == NULL)
+		{
+				printf("error : local symbol table empty!\n");
+				return -1;
+		}
+		while(curridx < index)
+		{
+				currnode = currnode->link;
+				++curridx;
+		}
+		return currnode->laddress;
 }
 
 void ModMem(char* fname)
 {
-	FILE* fp;
-	char buf[MAX];
-	char pname[MAX];
-	char refname[10];
-	unsigned int index=0, modlength=0, paddress=0, taddress=0, sindex=1, disp=0;
-	int hb=0;
-	memset(buf,0,sizeof(char)*MAX);
-	memset(pname,0,sizeof(char)*MAX);
-	memset(refname,0,sizeof(char)*10);
-	fp = fopen(fname,"r");
-	while(fgets(buf,MAX,fp))
-	{
-		index=0;
-		if((buf[0] == '.'))
+		FILE* fp;
+		char buf[MAX];
+		char pname[MAX];
+		char refname[10];
+		unsigned int index=0, modlength=0, paddress=0, taddress=0, sindex=1, disp=0;
+		int hb=0;
+		memset(buf,0,sizeof(char)*MAX);
+		memset(pname,0,sizeof(char)*MAX);
+		memset(refname,0,sizeof(char)*10);
+		fp = fopen(fname,"r");
+		while(fgets(buf,MAX,fp))
 		{
-			continue;
+				index=0;
+				if((buf[0] == '.'))
+				{
+						continue;
+				}
+				else if(buf[0] == 'H')
+				{
+						sscanf(buf+1,"%s",pname);
+						paddress = GetCsect(pname);
+						AddLsymtab(sindex,paddress);
+						//00 local symtable node becomes the head node
+				}
+				else if(buf[0] == 'D')
+				{
+						while(sscanf(buf+1+(index*12),"%s %06X",refname,&taddress)!=-1)
+						{
+								index++;
+								AddDsymtab(refname,taddress);
+								//move to link index-1 times to add local symtable.
+						}
+				}
+				else if(buf[0] == 'R')
+				{
+						index=0;
+						//when input was came in from alphabet first@@@@@@@@@@@@@@@@@@@@@@
+						if(buf[1] == '0')
+						{
+								while(sscanf(buf+1+(index*8),"%02X%s",&sindex,refname)!=-1)
+								{
+										index++;
+										AddLsymtab(index+1,GetEsymtab(refname));
+										//move to link index-1 times to add local symtable.
+								}
+						}
+						else
+						{
+								while(sscanf(buf+1+(index*6),"%s",refname)!=-1)
+								{
+										index++;
+										AddLsymtab(index+1,GetEsymtab(refname));
+								}
+						}
+				}
+				else if(buf[0] == 'M')
+				{
+						sscanf(buf+1,"%06X%02X",&taddress,&modlength);
+						taddress += GetCsect(pname);
+						if(modlength == 5)
+								//format4 modification
+						{
+								disp = (mem[taddress]%16)*65536+mem[taddress+1]*256+mem[taddress+2];
+						}
+						else
+								//format3 modification
+						{
+								disp = mem[taddress]*65536+mem[taddress+1]*256+mem[taddress+2];
+						}
+						sscanf(buf+10,"%02X",&sindex);
+						if(buf[9] == '+')
+						{
+								disp += GetLsymtab(sindex);
+						}
+						else
+						{
+								disp -= GetLsymtab(sindex);
+						}
+						if(modlength == 5)
+						{
+								mem[taddress]/16*16;
+								mem[taddress] += disp%1048576/65536;
+								mem[taddress+1] = disp%65536/256;
+								mem[taddress+2] = disp%256;
+						}
+						else
+						{
+								mem[taddress] = disp%16777216/65536;
+								mem[taddress+1] = disp%65536/256;
+								mem[taddress+2] = disp%256;
+						}
+				}
 		}
-		else if(buf[0] == 'H')
-		{
-			sscanf(buf+1,"%s",pname);
-			paddress = GetCsect(pname);
-			AddLsymtab(sindex,paddress);
-			//00 local symtable node becomes the head node
-		}
-		else if(buf[0] == 'D')
-		{
-			while(sscanf(buf+1+(index*12),"%s %06X",refname,&taddress)!=-1)
-			{
-				index++;
-				AddDsymtab(refname,taddress);
-				//move to link index-1 times to add local symtable.
-			}
-		}
-		else if(buf[0] == 'R')
-		{
-			index=0;
-			//when input was came in from alphabet first@@@@@@@@@@@@@@@@@@@@@@
-			while(sscanf(buf+1+(index*8),"%02X%s",&sindex,refname)!=-1)
-			{
-				index++;
-				AddLsymtab(index+1,GetEsymtab(refname));
-				//move to link index-1 times to add local symtable.
-			}
-		}
-		else if(buf[0] == 'M')
-		{
-			sscanf(buf+1,"%06X%02X",&taddress,&modlength);
-			taddress += GetCsect(pname);
-			if(modlength == 5)
-			//format4 modification
-			{
-				disp = (mem[taddress]%16)*65536+mem[taddress+1]*256+mem[taddress+2];
-			}
-			else
-			//format3 modification
-			{
-				disp = mem[taddress]*65536+mem[taddress+1]*256+mem[taddress+2];
-			}
-			sscanf(buf+10,"%02X",&sindex);
-			if(buf[9] == '+')
-			{
-				disp += GetLsymtab(sindex);
-			}
-			else
-			{
-				disp -= GetLsymtab(sindex);
-			}
-			if(modlength == 5)
-			{
-				mem[taddress]/16*16;
-				mem[taddress] += disp%1048576/65536;
-				mem[taddress+1] = disp%65536/256;
-				mem[taddress+2] = disp%256;
-			}
-			else
-			{
-				mem[taddress] = disp%16777216/65536;
-				mem[taddress+1] = disp%65536/256;
-				mem[taddress+2] = disp%256;
-			}
-		}
-	}
-	return;
+		return;
 }
 
 void PrintReg()
 {
-	int i=0;
-	printf("\t\tA : %06X X : %06X\n",regarray[RegA],regarray[RegX]);
-	printf("\t\tL : %06X PC: %06X\n",regarray[RegL],regarray[RegPC]);
-	printf("\t\tB : %06X S : %06X\n",regarray[RegB],regarray[RegS]);
-	printf("\t\tT : %06X\n",regarray[RegT]);
+		int i=0;
+		printf("\t\tA : %06X X : %06X\n",regarray[RegA],regarray[RegX]);
+		printf("\t\tL : %06X PC: %06X\n",regarray[RegL],regarray[RegPC]);
+		printf("\t\tB : %06X S : %06X\n",regarray[RegB],regarray[RegS]);
+		printf("\t\tT : %06X\n",regarray[RegT]);
 }
 
 void Run()
 {
-	unsigned int curraddr = regarray[RegPC];
-	unsigned int endaddr = totallength+startaddr;
-	unsigned int bpaddr=0;
-	int format=0;
-	int opcode=0;
-	int disp=0;
-	regarray[RegPC] = startaddr;
-	bpaddr = GetBp(startaddr);
-	while(curraddr<endaddr)
-	{
-		if(curraddr == bpaddr)
+		TREC* currnode = trecordhead;
+		unsigned int curraddr = 0;
+		unsigned int endaddr = totallength+startaddr;
+		unsigned int bpaddr=0;
+		unsigned int dispaddr=0;
+		int format=0;
+		int opcode=0;
+		int niflag = 0;
+		int xbpeflag = 0;
+		int disp=0;
+		while(regarray[RegPC] > currnode -> address)
 		{
-			PrintReg();
-			printf("Stop at checkpoint[%04X]\n",bpaddr);
-			bpaddr = GetBp(bpaddr);
+			if(currnode->link == NULL)
+				break;
+			currnode = currnode->link;
 		}
-		opcode = mem[curraddr]/4*4;
-		disp = mem[curraddr+1]%16*256+mem[curraddr+2];
-		//calculate displacement
-		//@@@@@@@@@@@@@@@@@@@@@@
-		if(opcode == 0)
-		//instruction LDA
+		regarray[RegPC] = currnode->address;
+		while(currnode != NULL)
 		{
-			format = 3;
-			regarray[RegA] = disp;
-		}
-		if(opcode == 104)
-		//instruction LDB
-		{
-			format = 3;
-			regarray[RegB] = disp;
-		}
-		if(opcode == 116)
-		//instruction LDT
-		{
-			format = 3;
-			regarray[RegT] = disp;
-		}
+				regarray[RegPC] = currnode->address;
+				curraddr = regarray[RegPC];
+				endaddr = regarray[RegPC]+currnode->length;
+				bpaddr = GetBp(startaddr);
+				while(curraddr < endaddr)
+				{
+						format=3;
+						niflag = mem[curraddr]%4;
+						opcode = mem[curraddr]/4*4;
+						xbpeflag = mem[curraddr+1]/16;
+						if(niflag == 1)
+						//direct addressing
+						{
+							disp = mem[curraddr+1]%16*256+mem[curraddr+2];
+							dispaddr = disp;
+						}
+						else if(niflag == 2)
+						//indirect addressing
+						{
+							disp = mem[mem[curraddr+1]%16*256+mem[curraddr+2]];
+						}
+						else if(niflag == 3)
+						//simple addressing
+						{
+							dispaddr = mem[curraddr+1]%16*256+mem[curraddr+2];
+							if(xbpeflag/4096)
+							//xflag on
+							{
+								dispaddr += regarray[RegX];
+							}
+							if(xbpeflag%4096/256)
+							//bflag on
+							{
+								dispaddr += regarray[RegB];
+							}
+							if(xbpeflag%256/16)
+							//pcflag on
+							{
+								dispaddr += regarray[RegPC];
+							}
+							disp = mem[dispaddr];
+						}
+						//calculate displacement
+						//@@@@@@@@@@@@@@@@@@@@@@
+						if(opcode == 0)
+						//instruction LDA
+						{
+								format = 3;
+								regarray[RegA] = disp;
+						}
+						else if(opcode == 104)
+						//instruction LDB
+						{
+								format = 3;
+								regarray[RegB] = disp;
+						}
+						else if(opcode == 116)
+						//instruction LDT
+						{
+								format = 3;
+								regarray[RegT] = disp;
+						}
+						else if(opcode == 80)
+						//instruction LDCH
+						{
+								format = 3;
+								regarray[RegA]/256*256+disp;
+								regarray[RegA]+disp%256;
+						}
+						else if(opcode == 12)
+						//instruction STA
+						{
+							format = 3;
+							mem[disp] = regarray[RegA]/65536;
+							mem[disp+1] = regarray[RegA]%65536/256;
+							mem[disp+2] = regarray[RegA]%256;
+						}
+						else if(opcode == 16)
+						//instruction STX
+						{
+							format = 3;
+							mem[disp] = regarray[RegX]/65536;
+							mem[disp+1] = regarray[RegX]%65536/256;
+							mem[disp+2] = regarray[RegX]%256;
+						}
+						else if(opcode == 20)
+						//instruction STL
+						{
+							format = 3;
+							mem[disp] = regarray[RegL]/65536;
+							mem[disp+1] = regarray[RegL]%65536/256;
+							mem[disp+2] = regarray[RegL]%256;
+						}
+						else if(opcode == 84)
+						//instruction STCH
+						{
+							format = 3;
+							mem[disp] = regarray[RegA]%256;
+						}
+						else if(opcode == 60)
+						//instruction J
+						{
+							format = 3;
+							regarray[RegPC] = dispaddr;
+							curraddr = regarray[RegPC];
+							continue;
+						}
+						else if(opcode == 72)
+						//instruction JSUB
+						{
+							format = 3;
+							regarray[RegL] = regarray[RegPC];
+							regarray[RegPC] = dispaddr;
+							curraddr = regarray[RegPC];
+							continue;
+						}
+						else if(opcode == 56)
+						//instruction JLT
+						{
+							format = 4;
+							if(regarray[RegSW] == -1)
+							//-1 for a less than b
+							{
+								regarray[RegPC] = dispaddr;
+								curraddr = regarray[RegPC];
+								continue;
+							}
+						}
+						else if(opcode == 48)
+						//instruction JEQ
+						{
+							format = 3;
+							if(regarray[RegSW] == 0)
+							{
+								regarray[RegPC] = dispaddr;
+								curraddr = regarray[RegPC];
+								continue;
+							}
+						}
+						else if(opcode == 76)
+						//instruction RSUB
+						{
+							format = 3;
+							regarray[RegPC] = regarray[RegL];
+						}
+						else if(opcode == 40)
+						//instruction COMP
+						{
+							format = 3;
+							if(regarray[RegA] < disp)
+							{
+								regarray[RegSW] = -1;
+							}
+							else if(regarray[RegA] == disp)
+							{
+								regarray[RegSW] = 0;
+							}
+							else
+							{
+								regarray[RegSW] = 1;
+							}
+						}
+						else if(opcode == 160)
+						//instruction COMPR
+						{
+							format = 2;
+							disp = mem[curraddr+1];
+							if(regarray[disp/16] < regarray[disp%16])
+							{
+								regarray[RegSW] = -1;
+							}
+							else if(regarray[disp/16] == regarray[disp%16])
+							{
+								regarray[RegSW] = 0;
+							}
+							else
+							{
+								regarray[RegSW] = 1;
+							}
+						}
+						else if(opcode == 180)
+						//instruction CLEAR
+						{
+							format = 2;
+							disp = mem[curraddr+1];
+							regarray[disp/16] = 0;
+						}
+						else if(opcode == 184)
+						//instruction TIXR
+						{
+							format = 2;
+							disp = mem[curraddr+1];
+							regarray[RegX] ++;
+							if(regarray[RegX] < regarray[disp/16])
+							{
+								regarray[RegSW] =  -1;
+							}
+							else if(regarray[RegX] == regarray[disp/16])
+							{
+								regarray[RegSW] = 0;
+							}
+							else
+							{
+								regarray[RegSW] = 1;
+							}
+						}
+						else if(opcode == 224)
+						//instruction TD
+						{
+							format = 3;
+						}
+						else if(opcode == 216)
+						//instruction RD
+						{
+							format = 3;
+						}
+						else if(opcode == 220)
+						//instruction WD
+						{
+							format = 3;
+						}
 
-		//@@@@@@@@@@@@@@@@@@@@@@
-		if(format == 3)
-		{
-			format += mem[curraddr+1]/16%2;
-			//add e flag to find what instruction is in format4
+						//@@@@@@@@@@@@@@@@@@@@@@
+						if(format == 3)
+						{
+								format += mem[curraddr+1]/16%2;
+								//add e flag to find what instruction is in format4
+						}
+						if(curraddr == bpaddr)
+						{
+								PrintReg();
+								printf("Stop at checkpoint[%04X]\n",bpaddr);
+								bpaddr = GetBp(bpaddr);
+								regarray[RegPC] = curraddr+format;
+								return;
+						}
+						curraddr+=format;
+						regarray[RegPC] = curraddr;
+				}
+				currnode = currnode->link;
 		}
-		curraddr+=format;
-		regarray[RegPC] = curraddr;
-	}
-
-	PrintReg();
-	printf("\tEnd program.\n");
+		PrintReg();
+		printf("\tEnd program.\n");
+		regarray[RegPC] = startaddr;
+		return;
 }
+

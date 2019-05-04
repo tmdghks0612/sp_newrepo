@@ -57,6 +57,13 @@ typedef struct DSYM__node
 	struct DSYM__node* link;
 } DSYM;
 
+typedef struct TREC__node
+{
+	unsigned int address;
+	unsigned int length;
+	struct TREC__node* link;
+} TREC;
+
 enum Reg{RegA=0,RegX=1,RegL=2,RegB=3,RegS=4,RegT=5,RegF=6,RegPC=8,RegSW=9};
 enum Flags{FlagX=8,FlagB=4,FlagP=2,FlagE=1};
 
@@ -106,6 +113,7 @@ int Extsymtab(char* input);
 void AddCsect(char* csectname, int addrtemp, int length);
 int AddEsym(char* symname, int addrtemp);
 int AddLsym(int index, unsigned int address);
+int AddTrec(unsigned int address, int length);
 int GetCsect(char* csectname);
 int GetEsymtab(char* symname);
 int GetLsymtab(int index);
@@ -126,8 +134,10 @@ ESYM* esymboltable=NULL;
 ESYM* etemp = NULL;
 LSYM* lsymboltable=NULL;
 DSYM* dsymboltable=NULL;
+TREC* trecordhead=NULL;
 int startaddr=0;
 int totallength=0;
 unsigned int regarray[10];
+unsigned int tempaddr=0;
 
 
