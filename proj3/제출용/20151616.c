@@ -132,7 +132,6 @@ int main()
 						}
 						startaddr = tempaddr;
 						PrintExtsymtab();
-						totallength=0;
 						ResetEsym();
 						InputHistory(&head, input);
 				}
@@ -2521,7 +2520,10 @@ void ModMem(char* fname)
 						{
 								disp = mem[taddress]*65536+mem[taddress+1]*256+mem[taddress+2];
 						}
-						sscanf(buf+10,"%02X",&sindex);
+						if(sscanf(buf+10,"%02X",&sindex) == 0)
+						{
+							continue;
+						}
 						if(buf[9] == '+')
 						{
 								disp += GetLsymtab(sindex);
@@ -2559,7 +2561,6 @@ void PrintReg()
 
 void Run()
 {
-		TREC* currnode = trecordhead;
 		unsigned int curraddr = 0;
 		unsigned int endaddr = totallength+startaddr;
 		unsigned int bpaddr=0;
@@ -2569,118 +2570,167 @@ void Run()
 		int niflag = 0;
 		int xbpeflag = 0;
 		int disp=0;
-		while(regarray[RegPC] > currnode -> address)
+		regarray[RegPC] = startaddr;
+		regarray[RegL] = endaddr;
+		curraddr = regarray[RegPC];
+		bpaddr = GetBp(startaddr);
+		while(curraddr < endaddr)
 		{
-			if(currnode->link == NULL)
-				break;
-			currnode = currnode->link;
-		}
-		regarray[RegPC] = currnode->address;
-		while(currnode != NULL)
-		{
-				regarray[RegPC] = currnode->address;
-				curraddr = regarray[RegPC];
-				endaddr = regarray[RegPC]+currnode->length;
-				bpaddr = GetBp(startaddr);
-				while(curraddr < endaddr)
+				format=3;
+				niflag = mem[curraddr]%4;
+				opcode = mem[curraddr]/4*4;
+				xbpeflag = mem[curraddr+1]/16;
+				if((opcode == 160)||(opcode == 184)||(opcode == 180))
+				//compr, tixr, clear
 				{
-						format=3;
-						niflag = mem[curraddr]%4;
-						opcode = mem[curraddr]/4*4;
-						xbpeflag = mem[curraddr+1]/16;
-						if(niflag == 1)
-						//direct addressing
-						{
-							disp = mem[curraddr+1]%16*256+mem[curraddr+2];
-							dispaddr = disp;
-						}
-						else if(niflag == 2)
-						//indirect addressing
-						{
-							disp = mem[mem[curraddr+1]%16*256+mem[curraddr+2]];
-						}
-						else if(niflag == 3)
-						//simple addressing
-						{
-							dispaddr = mem[curraddr+1]%16*256+mem[curraddr+2];
-							if(xbpeflag/4096)
-							//xflag on
-							{
-								dispaddr += regarray[RegX];
-							}
-							if(xbpeflag%4096/256)
-							//bflag on
-							{
-								dispaddr += regarray[RegB];
-							}
-							if(xbpeflag%256/16)
-							//pcflag on
-							{
-								dispaddr += regarray[RegPC];
-							}
-							disp = mem[dispaddr];
-						}
-						//calculate displacement
-						//@@@@@@@@@@@@@@@@@@@@@@
-						if(opcode == 0)
-						//instruction LDA
-						{
-								format = 3;
-								regarray[RegA] = disp;
-						}
-						else if(opcode == 104)
-						//instruction LDB
-						{
-								format = 3;
-								regarray[RegB] = disp;
-						}
-						else if(opcode == 116)
-						//instruction LDT
-						{
-								format = 3;
-								regarray[RegT] = disp;
-						}
-						else if(opcode == 80)
-						//instruction LDCH
-						{
-								format = 3;
-								regarray[RegA]/256*256+disp;
-								regarray[RegA]+disp%256;
-						}
-						else if(opcode == 12)
-						//instruction STA
-						{
-							format = 3;
-							mem[disp] = regarray[RegA]/65536;
-							mem[disp+1] = regarray[RegA]%65536/256;
-							mem[disp+2] = regarray[RegA]%256;
-						}
+					format=2;
+				}
+				else
+				{
+						format += mem[curraddr+1]/16%2;
+						//add e flag to find what instruction is in format4
+				}
+
+				regarray[RegPC]+=format;
+				if(niflag == 1)
+				//direct addressing
+				{
+					dispaddr = mem[curraddr+1]%16*256+mem[curraddr+2];
+					if(mem[curraddr+1]%16>7)
+					{
+						dispaddr = dispaddr|0xFFFFF000;
+					}
+					if(xbpeflag/8)
+					//xflag on
+					{
+						dispaddr += regarray[RegX];
+					}
+					if(xbpeflag%8/4)
+					//bflag on
+					{
+						dispaddr += regarray[RegB];
+					}
+					if(xbpeflag%4/2)
+					//pcflag on
+					{
+						dispaddr += regarray[RegPC];
+					}
+					disp = dispaddr;
+				}
+				else if(niflag == 2)
+				//indirect addressing
+				{
+					dispaddr = mem[curraddr+1]%16*256+mem[curraddr+2];
+					if(mem[curraddr+1]%16>7)
+					{
+						dispaddr = dispaddr|0xFFFFF000;
+					}
+					if(xbpeflag/8)
+					//xflag on
+					{
+						dispaddr += regarray[RegX];
+					}
+					if(xbpeflag%8/4)
+					//bflag on
+					{
+						dispaddr += regarray[RegB];
+					}
+					if(xbpeflag%4/2)
+					//pcflag on
+					{
+						dispaddr += regarray[RegPC];
+					}
+					disp = mem[dispaddr]*65536+mem[dispaddr+1]*256+mem[dispaddr+2];
+					dispaddr = disp;
+				}
+				else if(niflag == 3)
+				//simple addressing
+				{
+					dispaddr = mem[curraddr+1]%16*256+mem[curraddr+2];
+					if(mem[curraddr+1]%16>7)
+					{
+						dispaddr = dispaddr|0xFFFFF000;
+					}
+					if(xbpeflag/8)
+					//xflag on
+					{
+						dispaddr += regarray[RegX];
+					}
+					if(xbpeflag%8/4)
+					//bflag on
+					{
+						dispaddr += regarray[RegB];
+					}
+					if(xbpeflag%4/2)
+					//pcflag on
+					{
+						dispaddr += regarray[RegPC];
+					}
+					//disp = mem[dispaddr]*65536+mem[dispaddr+1]*256+mem[dispaddr+2];
+					disp = mem[dispaddr]*65536+mem[dispaddr+1]*256+mem[dispaddr+2];
+				}
+				if(niflag != 0)
+				{
+					if(mem[curraddr+1]/16%2)
+					{
+						dispaddr = mem[curraddr+1]%16*65536+mem[curraddr+2]*256+mem[curraddr+3];
+						disp = mem[dispaddr];
+					}
+					//add e flag to find what instruction is in format4
+				}
+
+				//calculate displacement
+				//@@@@@@@@@@@@@@@@@@@@@@
+				if(opcode == 0)
+				//instruction LDA
+				{
+						regarray[RegA] = disp;
+				}
+				else if(opcode == 104)
+				//instruction LDB
+				{
+						regarray[RegB] = disp;
+				}
+				else if(opcode == 116)
+				//instruction LDT
+				{
+						regarray[RegT] = disp;
+				}
+				else if(opcode == 80)
+				//instruction LDCH
+				{
+						regarray[RegA] = regarray[RegA]/256*256;
+						regarray[RegA] = regarray[RegA]+disp/65536;
+				}
+				else if(opcode == 12)
+				//instruction STA
+				{
+					mem[dispaddr] = regarray[RegA]/65536;
+					mem[dispaddr+1] = regarray[RegA]%65536/256;
+					mem[dispaddr+2] = regarray[RegA]%256;
+				}
 						else if(opcode == 16)
 						//instruction STX
 						{
-							format = 3;
-							mem[disp] = regarray[RegX]/65536;
-							mem[disp+1] = regarray[RegX]%65536/256;
-							mem[disp+2] = regarray[RegX]%256;
+							mem[dispaddr] = regarray[RegX]/65536;
+							mem[dispaddr+1] = regarray[RegX]%65536/256;
+							mem[dispaddr+2] = regarray[RegX]%256;
 						}
 						else if(opcode == 20)
 						//instruction STL
 						{
-							format = 3;
-							mem[disp] = regarray[RegL]/65536;
-							mem[disp+1] = regarray[RegL]%65536/256;
-							mem[disp+2] = regarray[RegL]%256;
+							mem[dispaddr] = regarray[RegL]/65536;
+							mem[dispaddr+1] = regarray[RegL]%65536/256;
+							mem[dispaddr+2] = regarray[RegL]%256;
 						}
 						else if(opcode == 84)
 						//instruction STCH
 						{
-							format = 3;
 							mem[disp] = regarray[RegA]%256;
 						}
 						else if(opcode == 60)
 						//instruction J
 						{
-							format = 3;
 							regarray[RegPC] = dispaddr;
 							curraddr = regarray[RegPC];
 							continue;
@@ -2688,7 +2738,6 @@ void Run()
 						else if(opcode == 72)
 						//instruction JSUB
 						{
-							format = 3;
 							regarray[RegL] = regarray[RegPC];
 							regarray[RegPC] = dispaddr;
 							curraddr = regarray[RegPC];
@@ -2697,7 +2746,6 @@ void Run()
 						else if(opcode == 56)
 						//instruction JLT
 						{
-							format = 4;
 							if(regarray[RegSW] == -1)
 							//-1 for a less than b
 							{
@@ -2709,7 +2757,6 @@ void Run()
 						else if(opcode == 48)
 						//instruction JEQ
 						{
-							format = 3;
 							if(regarray[RegSW] == 0)
 							{
 								regarray[RegPC] = dispaddr;
@@ -2720,13 +2767,13 @@ void Run()
 						else if(opcode == 76)
 						//instruction RSUB
 						{
-							format = 3;
 							regarray[RegPC] = regarray[RegL];
+							curraddr = regarray[RegPC];
+							continue;
 						}
 						else if(opcode == 40)
 						//instruction COMP
 						{
-							format = 3;
 							if(regarray[RegA] < disp)
 							{
 								regarray[RegSW] = -1;
@@ -2743,7 +2790,6 @@ void Run()
 						else if(opcode == 160)
 						//instruction COMPR
 						{
-							format = 2;
 							disp = mem[curraddr+1];
 							if(regarray[disp/16] < regarray[disp%16])
 							{
@@ -2761,14 +2807,12 @@ void Run()
 						else if(opcode == 180)
 						//instruction CLEAR
 						{
-							format = 2;
 							disp = mem[curraddr+1];
 							regarray[disp/16] = 0;
 						}
 						else if(opcode == 184)
 						//instruction TIXR
 						{
-							format = 2;
 							disp = mem[curraddr+1];
 							regarray[RegX] ++;
 							if(regarray[RegX] < regarray[disp/16])
@@ -2787,25 +2831,21 @@ void Run()
 						else if(opcode == 224)
 						//instruction TD
 						{
-							format = 3;
+							regarray[RegSW]=1;
 						}
 						else if(opcode == 216)
 						//instruction RD
 						{
-							format = 3;
+							regarray[RegA]/16*16;
 						}
 						else if(opcode == 220)
 						//instruction WD
 						{
-							format = 3;
 						}
 
 						//@@@@@@@@@@@@@@@@@@@@@@
-						if(format == 3)
-						{
-								format += mem[curraddr+1]/16%2;
-								//add e flag to find what instruction is in format4
-						}
+						
+				curraddr+=format;
 						if(curraddr == bpaddr)
 						{
 								PrintReg();
@@ -2814,11 +2854,7 @@ void Run()
 								regarray[RegPC] = curraddr+format;
 								return;
 						}
-						curraddr+=format;
-						regarray[RegPC] = curraddr;
-				}
-				currnode = currnode->link;
-		}
+					}
 		PrintReg();
 		printf("\tEnd program.\n");
 		regarray[RegPC] = startaddr;
